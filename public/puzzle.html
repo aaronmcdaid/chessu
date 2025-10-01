@@ -155,6 +155,14 @@
     .links a:hover {
       text-decoration: underline;
     }
+    .highlight-square {
+      box-shadow: inset 0 0 0 4px yellow !important;
+      animation: fadeHighlight 1.5s ease-out;
+    }
+    @keyframes fadeHighlight {
+      0% { box-shadow: inset 0 0 0 4px yellow !important; }
+      100% { box-shadow: inset 0 0 0 4px rgba(255, 255, 0, 0) !important; }
+    }
   </style>
 </head>
 <body>
@@ -239,6 +247,22 @@
     let solutionIndex = 0; // Track position in solution sequence
     let userMoves = []; // Track all user moves made
 
+    // Highlight squares after opponent move
+    function highlightMove(from, to) {
+      // Remove previous highlights
+      $('.square-55d63').removeClass('highlight-square');
+
+      // Add highlight to from and to squares
+      $('.square-' + from).addClass('highlight-square');
+      $('.square-' + to).addClass('highlight-square');
+
+      // Remove highlights after animation completes
+      setTimeout(() => {
+        $('.square-' + from).removeClass('highlight-square');
+        $('.square-' + to).removeClass('highlight-square');
+      }, 1500);
+    }
+
     // Load balance on page load
     async function loadBalance() {
       try {
@@ -268,9 +292,12 @@
 
         // Play the first move (opponent's move) automatically
         const firstMove = puzzle.solution[0];
+        const from = firstMove.substring(0, 2);
+        const to = firstMove.substring(2, 4);
+
         game.move({
-          from: firstMove.substring(0, 2),
-          to: firstMove.substring(2, 4),
+          from: from,
+          to: to,
           promotion: 'q'
         });
         solutionIndex = 1; // User's turn starts at index 1
@@ -281,6 +308,9 @@
         // Update UI - flip board if Black to move
         board.orientation(isWhiteToMove ? 'white' : 'black');
         board.position(fen);
+
+        // Highlight the opponent's move
+        setTimeout(() => highlightMove(from, to), 100);
         document.getElementById('rating').textContent = puzzle.rating;
         document.getElementById('themes').textContent = puzzle.themes.join(', ') || 'None';
         document.getElementById('fen').textContent = fen;
@@ -348,6 +378,9 @@
         board.position(game.fen());
         solutionIndex++;
 
+        // Highlight the opponent's move
+        highlightMove(from, to);
+
         // Check if puzzle is complete after opponent's move
         if (solutionIndex >= currentPuzzle.solution.length) {
           showMessage('✅ Puzzle complete! Submitting...', 'success');
@@ -406,15 +439,22 @@
 
       // Play the first move (opponent's move) automatically
       const firstMove = currentPuzzle.solution[0];
+      const from = firstMove.substring(0, 2);
+      const to = firstMove.substring(2, 4);
+
       game.move({
-        from: firstMove.substring(0, 2),
-        to: firstMove.substring(2, 4),
+        from: from,
+        to: to,
         promotion: 'q'
       });
 
       const isWhiteToMove = game.turn() === 'w';
       board.orientation(isWhiteToMove ? 'white' : 'black');
       board.position(game.fen());
+
+      // Highlight the opponent's move
+      setTimeout(() => highlightMove(from, to), 100);
+
       userMoves = [];
       solutionIndex = 1; // User's turn starts at index 1
       updateMovesDisplay();

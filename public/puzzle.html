@@ -542,7 +542,7 @@
     }
 
     async function submitSolution() {
-      showMessage('Checking solution...', 'info');
+      showMessage('Generating reward...', 'info');
 
       try {
         const response = await fetch('/api/puzzle/solve', {

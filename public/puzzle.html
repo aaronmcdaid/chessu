@@ -322,11 +322,12 @@
         const firstMove = puzzle.solution[0];
         const from = firstMove.substring(0, 2);
         const to = firstMove.substring(2, 4);
+        const promotion = firstMove.length === 5 ? firstMove[4] : 'q';
 
         game.move({
           from: from,
           to: to,
-          promotion: 'q'
+          promotion: promotion
         });
         solutionIndex = 1; // User's turn starts at index 1
 
@@ -368,23 +369,34 @@
       const expectedMove = currentPuzzle.solution[solutionIndex];
       const userMove = source + target;
 
+      // Check for promotion (5 characters means promotion piece is included)
+      let promotionPiece = 'q'; // default to queen
+      let expectedMoveBase = expectedMove;
+
+      if (expectedMove.length === 5) {
+        // Promotion move like "e7e8q"
+        expectedMoveBase = expectedMove.substring(0, 4);
+        promotionPiece = expectedMove[4];
+      }
+
       // Check if move matches expected move
-      if (userMove !== expectedMove) {
+      if (userMove !== expectedMoveBase) {
         showMessage('❌ Wrong move! Try again.', 'error');
         return 'snapback';
       }
 
-      // Make the move
+      // Make the move with correct promotion piece
       const move = game.move({
         from: source,
         to: target,
-        promotion: 'q'
+        promotion: promotionPiece
       });
 
       if (move === null) return 'snapback';
 
-      // Track user's move
-      userMoves.push(userMove);
+      // Track user's move (include promotion piece if applicable)
+      const fullMove = expectedMove.length === 5 ? userMove + promotionPiece : userMove;
+      userMoves.push(fullMove);
       solutionIndex++;
       updateMovesDisplay();
 
@@ -400,11 +412,12 @@
         const opponentMove = currentPuzzle.solution[solutionIndex];
         const from = opponentMove.substring(0, 2);
         const to = opponentMove.substring(2, 4);
+        const promotion = opponentMove.length === 5 ? opponentMove[4] : 'q';
 
         game.move({
           from: from,
           to: to,
-          promotion: 'q'
+          promotion: promotion
         });
 
         board.position(game.fen());
@@ -483,11 +496,12 @@
       const firstMove = currentPuzzle.solution[0];
       const from = firstMove.substring(0, 2);
       const to = firstMove.substring(2, 4);
+      const promotion = firstMove.length === 5 ? firstMove[4] : 'q';
 
       game.move({
         from: from,
         to: to,
-        promotion: 'q'
+        promotion: promotion
       });
 
       const isWhiteToMove = game.turn() === 'w';

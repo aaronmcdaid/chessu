@@ -18,7 +18,7 @@ const config = {
   activeMode: process.env.ACTIVE_MODE || 'test',
   dbPath: '/app/data/wallet.db',
   puzzleReward: 10, // sats per puzzle solved
-  rateLimitSeconds: 30, // seconds between solves per IP
+  rateLimitSeconds: 5, // seconds between solves per IP
 };
 
 // Load local puzzle database
@@ -141,7 +141,6 @@ app.get('/api/balance', async (req, res) => {
 // Get a random puzzle from local database
 app.get('/api/puzzle', async (req, res) => {
   try {
-    // Select a random puzzle
     const randomIndex = Math.floor(Math.random() * puzzlesData.length);
     const puzzle = puzzlesData[randomIndex];
 

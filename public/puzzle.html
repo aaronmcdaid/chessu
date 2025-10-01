@@ -439,6 +439,13 @@
           loadBalance();
         } else {
           showMessage(`✗ ${data.error}`, 'error');
+
+          // If rate limited, reset the puzzle so user can try again
+          if (response.status === 429) {
+            setTimeout(() => {
+              resetPuzzle();
+            }, 1000);
+          }
         }
       } catch (err) {
         showMessage(`✗ Network error: ${err.message}`, 'error');

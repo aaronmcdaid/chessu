@@ -11,13 +11,6 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load local puzzle database
-const puzzlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'easy_puzzles.json'), 'utf-8'));
-console.log(`Loaded ${puzzlesData.length} puzzles from local database`);
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
 // Configuration
 const config = {
   testMint: 'https://nofees.testnut.cashu.space',
@@ -25,7 +18,54 @@ const config = {
   activeMode: process.env.ACTIVE_MODE || 'test',
   dbPath: '/app/data/wallet.db',
   puzzleReward: 10, // sats per puzzle solved
+  rateLimitSeconds: 120, // seconds between solves per IP
 };
+
+// Load local puzzle database
+const puzzlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'easy_puzzles.json'), 'utf-8'));
+console.log(`Loaded ${puzzlesData.length} puzzles from local database`);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Rate limiting for puzzle solving
+const rateLimitMap = new Map(); // IP -> lastSolveTime
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const lastSolve = rateLimitMap.get(ip);
+  const rateLimitMs = config.rateLimitSeconds * 1000;
+
+  if (!lastSolve) {
+    rateLimitMap.set(ip, now);
+    return { allowed: true };
+  }
+
+  const timeSinceLastSolve = now - lastSolve;
+
+  if (timeSinceLastSolve < rateLimitMs) {
+    const secondsRemaining = Math.ceil((rateLimitMs - timeSinceLastSolve) / 1000);
+    return {
+      allowed: false,
+      message: `⏳ Slow down! You can only solve 1 puzzle every ${config.rateLimitSeconds} seconds. Try again in ${secondsRemaining} second${secondsRemaining > 1 ? 's' : ''}.`
+    };
+  }
+
+  // Rate limit passed
+  rateLimitMap.set(ip, now);
+  return { allowed: true };
+}
+
+// Clean up old entries every hour
+setInterval(() => {
+  const now = Date.now();
+  const rateLimitMs = config.rateLimitSeconds * 1000;
+  for (const [ip, lastSolve] of rateLimitMap.entries()) {
+    if (now - lastSolve > rateLimitMs * 10) { // Keep for 10x the rate limit
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 60 * 60 * 1000);
 
 const activeMint = config.activeMode === 'main' ? config.mainMint : config.testMint;
 
@@ -200,6 +240,13 @@ app.post('/api/puzzle/solve', async (req, res) => {
 
     if (!puzzleId || !moves || !Array.isArray(moves)) {
       return res.status(400).json({ error: 'Invalid request. Provide puzzleId and moves array.' });
+    }
+
+    // Check rate limit
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const rateLimitCheck = checkRateLimit(clientIp);
+    if (!rateLimitCheck.allowed) {
+      return res.status(429).json({ error: rateLimitCheck.message });
     }
 
     // Find the puzzle in our local database

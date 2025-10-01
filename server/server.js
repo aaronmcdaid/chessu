@@ -6,9 +6,14 @@ import { Manager, getEncodedToken } from 'coco-cashu-core';
 import { SqliteRepositories } from 'coco-cashu-sqlite3';
 import crypto from 'crypto';
 import sqlite3 from 'sqlite3';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load local puzzle database
+const puzzlesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'easy_puzzles.json'), 'utf-8'));
+console.log(`Loaded ${puzzlesData.length} puzzles from local database`);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -93,6 +98,32 @@ app.get('/api/balance', async (req, res) => {
   }
 });
 
+// Get a random puzzle from local database
+app.get('/api/puzzle', async (req, res) => {
+  try {
+    // Select a random puzzle
+    const randomIndex = Math.floor(Math.random() * puzzlesData.length);
+    const puzzle = puzzlesData[randomIndex];
+
+    console.log('[Debug] Selected puzzle:', {
+      id: puzzle.id,
+      rating: puzzle.rating,
+      fen: puzzle.fen
+    });
+
+    res.json({
+      id: puzzle.id,
+      fen: puzzle.fen,
+      rating: puzzle.rating,
+      solution: puzzle.solution,
+      themes: puzzle.themes
+    });
+  } catch (err) {
+    console.error('[Error] Failed to fetch puzzle:', err);
+    res.status(500).json({ error: 'Failed to fetch puzzle: ' + err.message });
+  }
+});
+
 // Receive Cashu tokens (for donations)
 app.post('/api/receive', async (req, res) => {
   try {
@@ -162,14 +193,28 @@ app.get('/api/donate/check/:quoteId', async (req, res) => {
   }
 });
 
-// Solve puzzle (dummy validation for now)
+// Solve puzzle
 app.post('/api/puzzle/solve', async (req, res) => {
   try {
-    const { solution } = req.body;
+    const { puzzleId, moves } = req.body;
 
-    // Dummy validation - accept any solution that equals "e4"
-    if (solution !== 'e4') {
-      return res.status(400).json({ error: 'Incorrect solution' });
+    if (!puzzleId || !moves || !Array.isArray(moves)) {
+      return res.status(400).json({ error: 'Invalid request. Provide puzzleId and moves array.' });
+    }
+
+    // Find the puzzle in our local database
+    const puzzle = puzzlesData.find(p => p.id === puzzleId);
+
+    if (!puzzle) {
+      return res.status(400).json({ error: 'Puzzle not found. Please try a new puzzle.' });
+    }
+
+    // Validate solution - check if user's moves match the puzzle solution
+    const correctSolution = puzzle.solution;
+    const isCorrect = JSON.stringify(moves) === JSON.stringify(correctSolution);
+
+    if (!isCorrect) {
+      return res.status(400).json({ error: 'Incorrect solution. Try again!' });
     }
 
     // Check if wallet has enough balance

@@ -4,13 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChessU Puzzle</title>
+
+  <!-- Chessboard CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 700px;
-      margin: 50px auto;
+      max-width: 900px;
+      margin: 30px auto;
       padding: 20px;
-      text-align: center;
       background: #f5f5f5;
     }
     .container {
@@ -19,50 +22,57 @@
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    h1 { color: #333; margin-bottom: 10px; }
+    h1 { color: #333; text-align: center; }
     .balance {
       background: #e3f2fd;
       padding: 10px;
       border-radius: 5px;
       margin: 20px 0;
+      text-align: center;
       font-size: 14px;
       color: #1976d2;
     }
-    .puzzle {
-      background: #fafafa;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      padding: 30px;
-      margin: 20px 0;
+    .puzzle-container {
+      display: flex;
+      gap: 30px;
+      margin: 30px 0;
     }
-    .puzzle h2 {
+    #board {
+      width: 400px;
+    }
+    .puzzle-info {
+      flex: 1;
+    }
+    .puzzle-info h2 {
+      margin-top: 0;
       color: #555;
-      margin-bottom: 15px;
     }
-    .puzzle p {
-      font-size: 18px;
-      color: #666;
-      line-height: 1.6;
-    }
-    input[type="text"] {
-      width: 200px;
-      padding: 12px;
-      font-size: 18px;
-      border: 2px solid #ddd;
+    .info-item {
+      margin: 15px 0;
+      padding: 10px;
+      background: #f8f9fa;
       border-radius: 5px;
-      margin: 20px 0;
-      text-align: center;
-      text-transform: lowercase;
+    }
+    .info-item strong {
+      color: #333;
+    }
+    .moves-display {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 15px 0;
+      font-family: monospace;
     }
     button {
       background: #4CAF50;
       color: white;
-      padding: 15px 40px;
-      font-size: 18px;
+      padding: 12px 30px;
+      font-size: 16px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      margin: 10px;
+      margin: 10px 5px;
     }
     button:hover {
       background: #45a049;
@@ -70,6 +80,12 @@
     button:disabled {
       background: #ccc;
       cursor: not-allowed;
+    }
+    button.secondary {
+      background: #2196F3;
+    }
+    button.secondary:hover {
+      background: #0b7dda;
     }
     .message {
       margin: 20px 0;
@@ -87,12 +103,18 @@
       color: #721c24;
       border: 1px solid #f5c6cb;
     }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
     .reward {
       margin: 30px 0;
       padding: 20px;
       background: #fff3cd;
       border: 2px solid #ffc107;
       border-radius: 8px;
+      text-align: center;
     }
     .reward h3 {
       color: #856404;
@@ -123,6 +145,7 @@
       margin-top: 30px;
       padding-top: 20px;
       border-top: 1px solid #ddd;
+      text-align: center;
     }
     .links a {
       color: #1976d2;
@@ -137,29 +160,46 @@
 <body>
   <div class="container">
     <h1>♟️ ChessU Puzzle Challenge</h1>
-    <p>Solve the puzzle, earn Cashu!</p>
 
     <div class="balance" id="balance">
       Loading puzzle pot balance...
     </div>
 
-    <div class="puzzle">
-      <h2>Puzzle #1</h2>
-      <p><strong>Question:</strong> What is the most popular first move in chess?</p>
-      <p><em>Hint: King's pawn opening</em></p>
-
-      <input
-        type="text"
-        id="solutionInput"
-        placeholder="e.g., e4"
-        maxlength="5"
-        autocomplete="off"
-      />
-      <br>
-      <button id="submitBtn" onclick="submitSolution()">Submit Solution</button>
-    </div>
-
     <div id="message"></div>
+
+    <div class="puzzle-container">
+      <div id="board"></div>
+      <div class="puzzle-info">
+        <h2>Puzzle Info</h2>
+        <div class="info-item">
+          <strong>Rating:</strong> <span id="rating">-</span>
+        </div>
+        <div class="info-item">
+          <strong>Themes:</strong> <span id="themes">-</span>
+        </div>
+        <div class="info-item">
+          <strong>FEN:</strong><br>
+          <code style="font-size: 11px; word-break: break-all;" id="fen">-</code>
+        </div>
+        <div class="info-item">
+          <strong>Solution (cheat):</strong><br>
+          <code style="font-size: 12px; color: #d32f2f;" id="solution">-</code>
+        </div>
+        <div class="info-item">
+          <strong>Instructions:</strong><br>
+          Find the best move for <strong id="sideToMove">white</strong>!<br>
+          <a id="lichessLink" href="#" target="_blank" style="color: #1976d2; font-size: 13px;">View on Lichess →</a>
+        </div>
+        <div class="moves-display">
+          <strong>Your moves:</strong><br>
+          <span id="userMoves">None yet</span>
+        </div>
+        <div style="margin-top: 20px;">
+          <button onclick="resetPuzzle()" class="secondary">Reset</button>
+          <button onclick="loadNewPuzzle()" class="secondary">New Puzzle</button>
+        </div>
+      </div>
+    </div>
 
     <div id="reward" style="display: none;" class="reward">
       <h3>🎉 Congratulations!</h3>
@@ -175,7 +215,7 @@
           📋 Copy Token to Clipboard
         </button>
       </div>
-      <button onclick="resetPuzzle()">Try Another Puzzle</button>
+      <button onclick="loadNewPuzzle()">Try Another Puzzle</button>
     </div>
 
     <div class="links">
@@ -185,73 +225,182 @@
     </div>
   </div>
 
+  <!-- jQuery (required by chessboard.js) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Chess.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <!-- Chessboard.js -->
+  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
   <script>
+    let board = null;
+    let game = null;
+    let currentPuzzle = null;
+    let solutionIndex = 0; // Track position in solution sequence
+    let userMoves = []; // Track all user moves made
+
     // Load balance on page load
     async function loadBalance() {
       try {
         const response = await fetch('/api/balance');
         const data = await response.json();
-        const balanceDiv = document.getElementById('balance');
-        balanceDiv.textContent = `💰 Puzzle Pot: ${data.total} sats (${data.activeMode} mode)`;
+        document.getElementById('balance').textContent = `💰 Puzzle Pot: ${data.total} sats (${data.activeMode} mode)`;
       } catch (err) {
         document.getElementById('balance').textContent = '⚠️ Could not load balance';
       }
     }
 
-    async function submitSolution() {
-      const input = document.getElementById('solutionInput');
-      const submitBtn = document.getElementById('submitBtn');
-      const messageDiv = document.getElementById('message');
-      const rewardDiv = document.getElementById('reward');
+    // Load a new puzzle
+    async function loadNewPuzzle() {
+      try {
+        showMessage('Loading puzzle...', 'info');
+        document.getElementById('reward').style.display = 'none';
 
-      const solution = input.value.trim().toLowerCase();
+        const response = await fetch('/api/puzzle');
+        const puzzle = await response.json();
 
-      if (!solution) {
-        showMessage('Please enter a solution!', 'error');
+        currentPuzzle = puzzle;
+        userMoves = [];
+        solutionIndex = 0;
+
+        // Load FEN directly from puzzle
+        game = new Chess(puzzle.fen);
+        const fen = puzzle.fen;
+        const isWhiteToMove = game.turn() === 'w';
+
+        // Update UI - flip board if Black to move
+        board.orientation(isWhiteToMove ? 'white' : 'black');
+        board.position(fen);
+        document.getElementById('rating').textContent = puzzle.rating;
+        document.getElementById('themes').textContent = puzzle.themes.join(', ') || 'None';
+        document.getElementById('fen').textContent = fen;
+        document.getElementById('solution').textContent = puzzle.solution.join(' → ');
+        document.getElementById('sideToMove').textContent = isWhiteToMove ? 'white' : 'black';
+        document.getElementById('lichessLink').href = `https://lichess.org/training/${puzzle.id}`;
+        document.getElementById('userMoves').textContent = 'None yet';
+
+        hideMessage();
+      } catch (err) {
+        showMessage('Failed to load puzzle: ' + err.message, 'error');
+      }
+    }
+
+    // Handle piece drop on board
+    function onDrop(source, target) {
+      // Check if puzzle is complete
+      if (solutionIndex >= currentPuzzle.solution.length) {
+        return 'snapback';
+      }
+
+      // Get expected move (user's move is at even indices: 0, 2, 4...)
+      const expectedMove = currentPuzzle.solution[solutionIndex];
+      const userMove = source + target;
+
+      // Check if move matches expected move
+      if (userMove !== expectedMove) {
+        showMessage('❌ Wrong move! Try again.', 'error');
+        return 'snapback';
+      }
+
+      // Make the move
+      const move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q'
+      });
+
+      if (move === null) return 'snapback';
+
+      // Track user's move
+      userMoves.push(userMove);
+      solutionIndex++;
+      updateMovesDisplay();
+
+      // Check if puzzle is complete
+      if (solutionIndex >= currentPuzzle.solution.length) {
+        showMessage('✅ Correct! Submitting solution...', 'success');
+        setTimeout(submitSolution, 500);
         return;
       }
 
-      submitBtn.disabled = true;
+      // Play opponent's response automatically
+      setTimeout(() => {
+        const opponentMove = currentPuzzle.solution[solutionIndex];
+        const from = opponentMove.substring(0, 2);
+        const to = opponentMove.substring(2, 4);
+
+        game.move({
+          from: from,
+          to: to,
+          promotion: 'q'
+        });
+
+        board.position(game.fen());
+        solutionIndex++;
+
+        // Check if puzzle is complete after opponent's move
+        if (solutionIndex >= currentPuzzle.solution.length) {
+          showMessage('✅ Puzzle complete! Submitting...', 'success');
+          setTimeout(submitSolution, 500);
+        }
+      }, 300);
+    }
+
+    function updateMovesDisplay() {
+      const movesEl = document.getElementById('userMoves');
+      if (userMoves.length === 0) {
+        movesEl.textContent = 'None yet';
+      } else {
+        movesEl.textContent = userMoves.join(', ');
+      }
+    }
+
+    async function submitSolution() {
       showMessage('Checking solution...', 'info');
 
       try {
         const response = await fetch('/api/puzzle/solve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ solution })
+          body: JSON.stringify({
+            puzzleId: currentPuzzle.id,
+            moves: userMoves
+          })
         });
 
         const data = await response.json();
 
         if (response.ok) {
           // Success! Show reward
-          messageDiv.style.display = 'none';
-          rewardDiv.style.display = 'block';
-
+          hideMessage();
+          document.getElementById('reward').style.display = 'block';
           document.getElementById('rewardAmount').textContent = data.reward;
           document.getElementById('qrImage').src = data.qrCode;
           document.getElementById('tokenString').textContent = data.token;
 
           // Update balance
-          document.getElementById('balance').textContent =
-            `💰 Puzzle Pot: ${data.remainingBalance} sats (updated)`;
-
-          input.value = '';
+          loadBalance();
         } else {
           showMessage(`✗ ${data.error}`, 'error');
-          submitBtn.disabled = false;
         }
       } catch (err) {
         showMessage(`✗ Network error: ${err.message}`, 'error');
-        submitBtn.disabled = false;
       }
     }
 
     function resetPuzzle() {
-      document.getElementById('reward').style.display = 'none';
-      document.getElementById('message').style.display = 'none';
-      document.getElementById('submitBtn').disabled = false;
-      document.getElementById('solutionInput').focus();
+      if (!currentPuzzle) return;
+
+      // Reset to puzzle starting position
+      game = new Chess(currentPuzzle.fen);
+
+      const isWhiteToMove = game.turn() === 'w';
+      board.orientation(isWhiteToMove ? 'white' : 'black');
+      board.position(game.fen());
+      userMoves = [];
+      solutionIndex = 0;
+      updateMovesDisplay();
+      hideMessage();
     }
 
     async function copyToken() {
@@ -271,15 +420,21 @@
       messageDiv.style.display = 'block';
     }
 
-    // Allow Enter key to submit
-    document.getElementById('solutionInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        submitSolution();
-      }
-    });
+    function hideMessage() {
+      document.getElementById('message').style.display = 'none';
+    }
 
-    // Load balance when page loads
+    // Initialize board (empty initially, will be set when puzzle loads)
+    const config = {
+      draggable: true,
+      onDrop: onDrop,
+      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    };
+    board = Chessboard('board', config);
+
+    // Load initial puzzle and balance
     loadBalance();
+    loadNewPuzzle();
   </script>
 </body>
 </html>

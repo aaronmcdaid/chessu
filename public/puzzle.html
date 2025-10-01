@@ -240,6 +240,9 @@
           📋 Copy Token to Clipboard
         </button>
       </div>
+      <div style="margin: 10px 0; font-size: 14px; color: #666;">
+        <strong>Mint:</strong> <span id="mintUrl"></span>
+      </div>
       <button onclick="loadNewPuzzle()">Try Another Puzzle</button>
     </div>
 
@@ -468,6 +471,7 @@
           document.getElementById('rewardAmount').textContent = data.reward;
           document.getElementById('qrImage').src = data.qrCode;
           document.getElementById('tokenString').textContent = data.token;
+          document.getElementById('mintUrl').textContent = data.mint;
 
           // Update balance
           loadBalance();

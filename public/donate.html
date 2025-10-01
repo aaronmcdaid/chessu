@@ -156,6 +156,9 @@
   <div id="tokenSection">
     <h3>Option 2: Donate Cashu Token</h3>
     <p>Paste your Cashu token to donate directly:</p>
+    <p style="font-size: 14px; color: #666; margin: 10px 0;">
+      <strong>Mint:</strong> <span id="mintInfo">Loading...</span>
+    </p>
     <textarea id="tokenInput" placeholder='Paste your Cashu token here (starts with "cashuA...")...'></textarea>
     <button id="donateBtn" onclick="donate()">Donate Tokens</button>
   </div>
@@ -300,6 +303,20 @@
       document.getElementById('message').style.display = 'none';
     }
 
+    // Load mint info on page load
+    async function loadMintInfo() {
+      try {
+        const response = await fetch('/health');
+        const data = await response.json();
+        if (data.mint) {
+          document.getElementById('mintInfo').textContent = data.mint;
+        }
+      } catch (err) {
+        console.error('Failed to load mint info:', err);
+        document.getElementById('mintInfo').textContent = 'Unknown';
+      }
+    }
+
     // Allow Enter key in textarea to submit
     document.getElementById('tokenInput').addEventListener('keydown', (e) => {
       if (e.ctrlKey && e.key === 'Enter') {
@@ -311,6 +328,9 @@
     window.addEventListener('beforeunload', () => {
       if (pollInterval) clearInterval(pollInterval);
     });
+
+    // Load mint info when page loads
+    loadMintInfo();
   </script>
 </body>
 </html>

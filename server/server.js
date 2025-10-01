@@ -288,6 +288,7 @@ app.post('/api/puzzle/solve', async (req, res) => {
       token: tokenString,
       qrCode,
       remainingBalance: newBalance[activeMint] || 0,
+      mint: activeMint,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

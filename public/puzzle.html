@@ -108,13 +108,29 @@
       color: #0c5460;
       border: 1px solid #bee5eb;
     }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
     .reward {
-      margin: 30px 0;
-      padding: 20px;
+      margin: 20px;
+      padding: 30px;
       background: #fff3cd;
       border: 2px solid #ffc107;
       border-radius: 8px;
       text-align: center;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
     }
     .reward h3 {
       color: #856404;
@@ -226,24 +242,26 @@
       </div>
     </div>
 
-    <div id="reward" style="display: none;" class="reward">
-      <h3>🎉 Congratulations!</h3>
-      <p>You earned <strong id="rewardAmount"></strong> sats!</p>
-      <p>Scan this QR code with your Cashu wallet:</p>
-      <div class="qr-code">
-        <img id="qrImage" src="" alt="Cashu Token QR Code">
+    <div id="rewardModal" class="modal-overlay" onclick="closeRewardModal(event)">
+      <div id="reward" class="reward" onclick="event.stopPropagation()">
+        <h3>🎉 Congratulations!</h3>
+        <p>You earned <strong id="rewardAmount"></strong> sats!</p>
+        <p>Scan this QR code with your Cashu wallet:</p>
+        <div class="qr-code">
+          <img id="qrImage" src="" alt="Cashu Token QR Code">
+        </div>
+        <div style="margin: 20px 0;">
+          <strong>Token:</strong>
+          <div class="token-string" id="tokenString"></div>
+          <button onclick="copyToken()" style="background: #2196F3; margin-top: 10px;">
+            📋 Copy Token to Clipboard
+          </button>
+        </div>
+        <div style="margin: 10px 0; font-size: 14px; color: #666;">
+          <strong>Mint:</strong> <span id="mintUrl"></span>
+        </div>
+        <button onclick="closeRewardModal()">Try Another Puzzle</button>
       </div>
-      <div style="margin: 20px 0;">
-        <strong>Token:</strong>
-        <div class="token-string" id="tokenString"></div>
-        <button onclick="copyToken()" style="background: #2196F3; margin-top: 10px;">
-          📋 Copy Token to Clipboard
-        </button>
-      </div>
-      <div style="margin: 10px 0; font-size: 14px; color: #666;">
-        <strong>Mint:</strong> <span id="mintUrl"></span>
-      </div>
-      <button onclick="loadNewPuzzle()">Try Another Puzzle</button>
     </div>
 
     <div class="links">
@@ -306,10 +324,18 @@
     }
 
     // Load a new puzzle
+    function closeRewardModal(event) {
+      // Close modal if clicking outside or if no event (button click)
+      if (!event || event.target.id === 'rewardModal') {
+        document.getElementById('rewardModal').style.display = 'none';
+        loadNewPuzzle();
+      }
+    }
+
     async function loadNewPuzzle() {
       try {
         showMessage('Loading puzzle...', 'info');
-        document.getElementById('reward').style.display = 'none';
+        document.getElementById('rewardModal').style.display = 'none';
 
         const response = await fetch('/api/puzzle');
         const puzzle = await response.json();
@@ -465,9 +491,9 @@
         const data = await response.json();
 
         if (response.ok) {
-          // Success! Show reward
+          // Success! Show reward modal
           hideMessage();
-          document.getElementById('reward').style.display = 'block';
+          document.getElementById('rewardModal').style.display = 'flex';
           document.getElementById('rewardAmount').textContent = data.reward;
           document.getElementById('qrImage').src = data.qrCode;
           document.getElementById('tokenString').textContent = data.token;

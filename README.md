@@ -209,3 +209,8 @@ cashu-chess-puzzle/
 ## License
 
 MIT
+
+## Notes to self
+
+while testing on my laptop:
+ - `docker-compose build && docker-compose down && docker-compose up -d` to restart docker after changing some code

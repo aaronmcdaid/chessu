@@ -123,10 +123,10 @@
   <!-- Lightning Invoice Section -->
   <div id="invoiceSection">
     <h3>Option 1: Pay with Lightning</h3>
-    <p>Enter amount in sats and pay the Lightning invoice:</p>
+    <p>Enter amount and pay the Lightning invoice:</p>
     <input type="number" id="amountInput" placeholder="Amount (sats)" value="100" min="1">
     <br>
-    <button id="createInvoiceBtn" onclick="createInvoice()">Create Invoice</button>
+    <button id="createInvoiceBtn" onclick="createInvoice()">Generate Invoice</button>
 
     <div id="invoiceDisplay" style="display: none;" class="invoice-container">
       <h3>⚡ Pay this Lightning Invoice</h3>
@@ -138,6 +138,15 @@
       <div id="paymentStatus" style="margin-top: 20px;">
         <p style="color: #856404;">⏳ Waiting for payment...</p>
       </div>
+    </div>
+
+    <div id="successMessage" style="display: none;" class="success message">
+      <p style="font-size: 18px; font-weight: bold;">✅ Payment received!</p>
+      <p>New puzzle pot: <strong id="newBalance">0</strong> sats</p>
+      <br>
+      <a href="/puzzle.html" style="color: #155724; font-weight: bold; text-decoration: underline; font-size: 16px;">
+        🧩 Start solving puzzles now!
+      </a>
     </div>
   </div>
 
@@ -209,21 +218,13 @@
 
           if (data.paid) {
             clearInterval(pollInterval);
-            document.getElementById('paymentStatus').innerHTML = `
-              <p style="color: #155724; font-weight: bold;">✅ Payment received!</p>
-              <p>New puzzle pot: ${data.balance} sats</p>
-            `;
 
-            // Show success message with link
-            setTimeout(() => {
-              showMessage('', 'success');
-              document.getElementById('message').innerHTML = `
-                ✓ Successfully donated! New puzzle pot: ${data.balance} sats<br><br>
-                <a href="/puzzle.html" style="color: #155724; font-weight: bold; text-decoration: underline;">
-                  🧩 Start solving puzzles now!
-                </a>
-              `;
-            }, 1000);
+            // Hide the invoice display
+            document.getElementById('invoiceDisplay').style.display = 'none';
+
+            // Show success message
+            document.getElementById('newBalance').textContent = data.balance;
+            document.getElementById('successMessage').style.display = 'block';
           }
         } catch (err) {
           console.error('Polling error:', err);

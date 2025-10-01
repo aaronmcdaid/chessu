@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donate to ChessU</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 { color: #333; }
+    textarea {
+      width: 100%;
+      height: 150px;
+      padding: 10px;
+      margin: 20px 0;
+      font-family: monospace;
+      font-size: 12px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 15px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .message {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+  </style>
+</head>
+<body>
+  <h1>💰 Donate to ChessU Puzzle Pot</h1>
+  <p>Paste your Cashu token below to add funds to the puzzle reward pool!</p>
+
+  <textarea id="tokenInput" placeholder='Paste your Cashu token here (starts with "cashuA...")...'></textarea>
+
+  <button id="donateBtn" onclick="donate()">Donate Tokens</button>
+
+  <div id="message"></div>
+
+  <script>
+    async function donate() {
+      const tokenInput = document.getElementById('tokenInput');
+      const donateBtn = document.getElementById('donateBtn');
+      const messageDiv = document.getElementById('message');
+
+      const token = tokenInput.value.trim();
+
+      if (!token) {
+        showMessage('Please paste a token first!', 'error');
+        return;
+      }
+
+      donateBtn.disabled = true;
+      showMessage('Receiving tokens...', 'info');
+
+      try {
+        const response = await fetch('/api/receive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showMessage(`✓ Successfully received ${data.amount} sats! New balance: ${data.balance} sats`, 'success');
+          tokenInput.value = '';
+        } else {
+          showMessage(`✗ Error: ${data.error}`, 'error');
+        }
+      } catch (err) {
+        showMessage(`✗ Network error: ${err.message}`, 'error');
+      } finally {
+        donateBtn.disabled = false;
+      }
+    }
+
+    function showMessage(msg, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = msg;
+      messageDiv.className = 'message ' + type;
+    }
+
+    // Allow Enter key in textarea to submit
+    document.getElementById('tokenInput').addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        donate();
+      }
+    });
+  </script>
+</body>
+</html>

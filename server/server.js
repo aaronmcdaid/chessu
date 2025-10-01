@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 
 // Configuration
 const config = {
-  testMint: 'https://testnut.cashu.space',
+  testMint: 'https://nofees.testnut.cashu.space',
   mainMint: 'https://mint.minibits.cash',
   activeMode: process.env.ACTIVE_MODE || 'test',
   dbPath: '/app/data/wallet.db',
@@ -87,6 +87,31 @@ app.get('/api/balance', async (req, res) => {
       activeMode: config.activeMode,
       activeMint,
       total: balances[activeMint] || 0
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Receive Cashu tokens (for donations)
+app.post('/api/receive', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ error: 'Token is required' });
+    }
+
+    // Receive the token
+    await manager.wallet.receive(token);
+
+    // Get updated balance
+    const balances = await manager.wallet.getBalances();
+    const totalReceived = balances[activeMint] || 0;
+
+    res.json({
+      success: true,
+      balance: totalReceived,
+      message: 'Tokens received successfully'
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

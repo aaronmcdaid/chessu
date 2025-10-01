@@ -2,3 +2,4 @@ node_modules/
 wallet-data/
 *.log
 .DS_Store
+.env

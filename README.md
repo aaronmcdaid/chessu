@@ -220,7 +220,5 @@ while testing on my laptop:
 ```
   On the VPS:
   cd ~/cashu-chess-puzzle
-  docker-compose down
-  docker load -i ~/chessu.tar
-  docker-compose up -d
+  docker-compose down && docker load -i ~/chessu.tar && docker-compose up -d
 ```

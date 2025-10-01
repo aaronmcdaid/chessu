@@ -657,34 +657,42 @@
       }
     });
 
-    // Handle tap-to-select on pieces with a timeout approach
-    let tapTimeout = null;
+    // Handle tap-to-select: detect quick tap vs drag
+    let tapStartTime = null;
+    let tapStartSquare = null;
+    let dragDetected = false;
+
     $('#board').on('mousedown touchstart', 'img[class^="piece-"]', function(e) {
       const $piece = $(this);
       const square = $piece.parent('.square-55d63').attr('data-square');
 
       if (square) {
-        // Set a timeout - if drag doesn't start in 200ms, treat as a tap
-        tapTimeout = setTimeout(() => {
-          onSquareClick(square);
-        }, 200);
-
-        $piece.data('tap-square', square);
+        tapStartTime = Date.now();
+        tapStartSquare = square;
+        dragDetected = false;
       }
     });
 
     $('#board').on('mouseup touchend', 'img[class^="piece-"]', function(e) {
-      if (tapTimeout) {
-        clearTimeout(tapTimeout);
-        tapTimeout = null;
+      if (tapStartSquare && !dragDetected) {
+        const tapDuration = Date.now() - tapStartTime;
+        const square = $(this).parent('.square-55d63').attr('data-square');
+
+        // Quick tap on same square = select
+        if (tapDuration < 300 && square === tapStartSquare) {
+          e.stopPropagation();
+          onSquareClick(square);
+        }
       }
+      tapStartTime = null;
+      tapStartSquare = null;
+      dragDetected = false;
     });
 
-    // Cancel tap timeout if drag actually starts
+    // Detect if drag started
     $('#board').on('mousemove touchmove', 'img[class^="piece-"]', function(e) {
-      if (tapTimeout) {
-        clearTimeout(tapTimeout);
-        tapTimeout = null;
+      if (tapStartSquare) {
+        dragDetected = true;
       }
     });
 

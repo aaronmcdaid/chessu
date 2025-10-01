@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import QRCode from 'qrcode';
-import { Manager } from 'coco-cashu-core';
+import { Manager, getEncodedToken } from 'coco-cashu-core';
 import { SqliteRepositories } from 'coco-cashu-sqlite3';
 import crypto from 'crypto';
 import sqlite3 from 'sqlite3';
@@ -182,7 +182,7 @@ app.post('/api/puzzle/solve', async (req, res) => {
 
     // Send tokens
     const token = await manager.wallet.send(activeMint, config.puzzleReward);
-    const tokenString = JSON.stringify(token);
+    const tokenString = getEncodedToken(token);
 
     // Generate QR code
     const qrCode = await QRCode.toDataURL(tokenString);

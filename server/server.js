@@ -210,10 +210,12 @@ app.post('/api/puzzle/solve', async (req, res) => {
     }
 
     // Validate solution - check if user's moves match the puzzle solution
-    const correctSolution = puzzle.solution;
-    const isCorrect = JSON.stringify(moves) === JSON.stringify(correctSolution);
+    // User's moves are at odd indices (1, 3, 5...) since opponent moves first at index 0
+    const userMovesInSolution = puzzle.solution.filter((_, index) => index % 2 === 1);
+    const isCorrect = JSON.stringify(moves) === JSON.stringify(userMovesInSolution);
 
     if (!isCorrect) {
+      console.log('[Debug] Solution mismatch:', { submitted: moves, expected: userMovesInSolution });
       return res.status(400).json({ error: 'Incorrect solution. Try again!' });
     }
 

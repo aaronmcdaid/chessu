@@ -174,6 +174,9 @@
     .highlight-square {
       box-shadow: inset 0 0 0 4px yellow !important;
     }
+    .selected-square {
+      box-shadow: inset 0 0 0 4px blue !important;
+    }
     .cheat-wrapper {
       display: inline;
       position: relative;
@@ -198,6 +201,25 @@
     }
     .cheat-wrapper:hover .cheat-tooltip {
       display: block;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .puzzle-container {
+        flex-direction: column;
+        gap: 20px;
+      }
+      #board {
+        width: 100%;
+        max-width: 400px;
+      }
+      .container {
+        padding: 15px;
+      }
+      .reward {
+        margin: 10px;
+        padding: 20px;
+      }
     }
   </style>
 </head>
@@ -284,6 +306,7 @@
     let currentPuzzle = null;
     let solutionIndex = 0; // Track position in solution sequence
     let userMoves = []; // Track all user moves made
+    let selectedSquare = null; // For tap-to-select, tap-to-move
 
     // Highlight squares after opponent move
     function highlightMove(from, to) {
@@ -343,6 +366,8 @@
         currentPuzzle = puzzle;
         userMoves = [];
         solutionIndex = 0;
+        selectedSquare = null;
+        $('.square-55d63').removeClass('selected-square');
 
         // Load FEN directly from puzzle
         game = new Chess(puzzle.fen);
@@ -386,6 +411,11 @@
 
     // Handle piece drop on board
     function onDrop(source, target) {
+      // Ignore clicks (source === target), let onSquareClick handle them
+      if (source === target) {
+        return;
+      }
+
       // Clear highlights from opponent's previous move
       clearHighlights();
 
@@ -466,6 +496,42 @@
       }, 300);
     }
 
+    // Handle square click for tap-to-select, tap-to-move
+    function onSquareClick(square) {
+      // Clear selection highlight
+      $('.square-55d63').removeClass('selected-square');
+
+      // If no square selected, select this square
+      if (!selectedSquare) {
+        const piece = game.get(square);
+        // Only select if there's a piece and it's the player's turn
+        if (piece && piece.color === game.turn()) {
+          selectedSquare = square;
+          $('.square-' + square).addClass('selected-square');
+        }
+        return;
+      }
+
+      // If clicking the same square, deselect
+      if (selectedSquare === square) {
+        selectedSquare = null;
+        return;
+      }
+
+      // Try to move from selected square to clicked square
+      const source = selectedSquare;
+      const target = square;
+      selectedSquare = null; // Clear selection
+
+      // Use the same logic as onDrop
+      const result = onDrop(source, target);
+
+      // If move failed, update board position to snap back
+      if (result === 'snapback') {
+        board.position(game.fen());
+      }
+    }
+
     function updateMovesDisplay() {
       const movesEl = document.getElementById('userMoves');
       if (userMoves.length === 0) {
@@ -543,6 +609,8 @@
 
       userMoves = [];
       solutionIndex = 1; // User's turn starts at index 1
+      selectedSquare = null;
+      $('.square-55d63').removeClass('selected-square');
       updateMovesDisplay();
       updateSolutionDisplay();
       hideMessage();
@@ -576,6 +644,49 @@
       pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
     };
     board = Chessboard('board', config);
+
+    // Add click handlers to squares and pieces (chessboard.js doesn't have onSquareClick)
+    $('#board').on('click', '.square-55d63', function(e) {
+      // Get square from the clicked element or its parent
+      let square = $(this).attr('data-square');
+      if (!square) {
+        square = $(this).closest('.square-55d63').attr('data-square');
+      }
+      if (square) {
+        onSquareClick(square);
+      }
+    });
+
+    // Handle tap-to-select on pieces with a timeout approach
+    let tapTimeout = null;
+    $('#board').on('mousedown touchstart', 'img[class^="piece-"]', function(e) {
+      const $piece = $(this);
+      const square = $piece.parent('.square-55d63').attr('data-square');
+
+      if (square) {
+        // Set a timeout - if drag doesn't start in 200ms, treat as a tap
+        tapTimeout = setTimeout(() => {
+          onSquareClick(square);
+        }, 200);
+
+        $piece.data('tap-square', square);
+      }
+    });
+
+    $('#board').on('mouseup touchend', 'img[class^="piece-"]', function(e) {
+      if (tapTimeout) {
+        clearTimeout(tapTimeout);
+        tapTimeout = null;
+      }
+    });
+
+    // Cancel tap timeout if drag actually starts
+    $('#board').on('mousemove touchmove', 'img[class^="piece-"]', function(e) {
+      if (tapTimeout) {
+        clearTimeout(tapTimeout);
+        tapTimeout = null;
+      }
+    });
 
     // Load initial puzzle and balance
     loadBalance();

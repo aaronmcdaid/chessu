@@ -18,7 +18,7 @@ const config = {
   activeMode: process.env.ACTIVE_MODE || 'test',
   dbPath: '/app/data/wallet.db',
   puzzleReward: 10, // sats per puzzle solved
-  rateLimitSeconds: 120, // seconds between solves per IP
+  rateLimitSeconds: 30, // seconds between solves per IP
 };
 
 // Load local puzzle database

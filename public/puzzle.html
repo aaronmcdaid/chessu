@@ -158,6 +158,31 @@
     .highlight-square {
       box-shadow: inset 0 0 0 4px yellow !important;
     }
+    .cheat-wrapper {
+      display: inline;
+      position: relative;
+    }
+    .cheat-trigger {
+      /* No special styling - looks like normal text */
+    }
+    .cheat-tooltip {
+      display: none;
+      position: absolute;
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 5px;
+      padding: 8px 12px;
+      margin-top: 5px;
+      top: 25px;
+      left: 0;
+      font-size: 13px;
+      color: #856404;
+      z-index: 1000;
+      white-space: nowrap;
+    }
+    .cheat-wrapper:hover .cheat-tooltip {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -185,12 +210,13 @@
           <code style="font-size: 11px; word-break: break-all;" id="fen">-</code>
         </div>
         <div class="info-item">
-          <strong>Next move (cheat):</strong><br>
-          <code style="font-size: 12px; color: #d32f2f;" id="solution">-</code>
-        </div>
-        <div class="info-item">
           <strong>Instructions:</strong><br>
-          Find the best move for <strong id="sideToMove">white</strong>!<br>
+          Find the <span class="cheat-wrapper">
+            <span class="cheat-trigger" id="bestWord">best</span>
+            <div class="cheat-tooltip" id="cheatTooltip">
+              Next move: <strong id="solution">-</strong>
+            </div>
+          </span> move for <strong id="sideToMove">white</strong>!<br>
           <a id="lichessLink" href="#" target="_blank" style="color: #1976d2; font-size: 13px;">View on Lichess →</a>
         </div>
         <div class="moves-display">

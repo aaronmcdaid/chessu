@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  chessu:
+    build:
+      context: ..
+      dockerfile: cashu-chess-puzzle/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./wallet-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - ACTIVE_MODE=test
+      - WALLET_SEED=test-seed-for-development-only-change-in-production
+    restart: unless-stopped

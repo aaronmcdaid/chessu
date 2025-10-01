@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Puzzle - Earn Cashu</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 { color: #333; }
+    .status {
+      margin: 20px 0;
+      padding: 10px;
+      border-radius: 5px;
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>♟️ Chess Puzzle Challenge</h1>
+  <p>Solve puzzles, earn Cashu tokens!</p>
+
+  <div class="status" id="status">
+    Loading...
+  </div>
+
+  <script>
+    // Test server connection
+    fetch('/health')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('status').textContent = `✓ ${data.message}`;
+      })
+      .catch(err => {
+        document.getElementById('status').textContent = '✗ Server not responding';
+      });
+  </script>
+</body>
+</html>

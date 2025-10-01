@@ -1,0 +1,17 @@
+{
+  "name": "cashu-chess-puzzle-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Chess puzzle server that rewards Cashu tokens",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "coco-cashu-core": "^1.0.0-rc9",
+    "coco-cashu-sqlite3": "^1.0.0-rc9",
+    "qrcode": "^1.5.3"
+  }
+}

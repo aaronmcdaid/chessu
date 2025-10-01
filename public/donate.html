@@ -13,6 +13,14 @@
       text-align: center;
     }
     h1 { color: #333; }
+    input[type="number"] {
+      width: 200px;
+      padding: 10px;
+      margin: 20px 0;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+    }
     textarea {
       width: 100%;
       height: 150px;
@@ -31,6 +39,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      margin: 10px;
     }
     button:hover {
       background: #45a049;
@@ -38,6 +47,12 @@
     button:disabled {
       background: #ccc;
       cursor: not-allowed;
+    }
+    button.secondary {
+      background: #2196F3;
+    }
+    button.secondary:hover {
+      background: #0b7dda;
     }
     .message {
       margin: 20px 0;
@@ -59,23 +74,176 @@
       color: #0c5460;
       border: 1px solid #bee5eb;
     }
+    .invoice-container {
+      margin: 30px 0;
+      padding: 20px;
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+    }
+    .qr-code img {
+      max-width: 300px;
+      border: 3px solid #333;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .invoice-string {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 15px 0;
+      word-break: break-all;
+      font-family: monospace;
+      font-size: 11px;
+      color: #495057;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+    .separator {
+      margin: 40px 0;
+      border-top: 2px solid #ddd;
+      position: relative;
+    }
+    .separator span {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 0 10px;
+      color: #666;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <h1>💰 Donate to ChessU Puzzle Pot</h1>
-  <p>Paste your Cashu token below to add funds to the puzzle reward pool!</p>
 
-  <textarea id="tokenInput" placeholder='Paste your Cashu token here (starts with "cashuA...")...'></textarea>
+  <!-- Lightning Invoice Section -->
+  <div id="invoiceSection">
+    <h3>Option 1: Pay with Lightning</h3>
+    <p>Enter amount in sats and pay the Lightning invoice:</p>
+    <input type="number" id="amountInput" placeholder="Amount (sats)" value="100" min="1">
+    <br>
+    <button id="createInvoiceBtn" onclick="createInvoice()">Create Invoice</button>
 
-  <button id="donateBtn" onclick="donate()">Donate Tokens</button>
+    <div id="invoiceDisplay" style="display: none;" class="invoice-container">
+      <h3>⚡ Pay this Lightning Invoice</h3>
+      <div class="qr-code">
+        <img id="invoiceQR" src="" alt="Lightning Invoice QR Code">
+      </div>
+      <div class="invoice-string" id="invoiceString"></div>
+      <button onclick="copyInvoice()" class="secondary">📋 Copy Invoice</button>
+      <div id="paymentStatus" style="margin-top: 20px;">
+        <p style="color: #856404;">⏳ Waiting for payment...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="separator"><span>OR</span></div>
+
+  <!-- Cashu Token Section -->
+  <div id="tokenSection">
+    <h3>Option 2: Donate Cashu Token</h3>
+    <p>Paste your Cashu token to donate directly:</p>
+    <textarea id="tokenInput" placeholder='Paste your Cashu token here (starts with "cashuA...")...'></textarea>
+    <button id="donateBtn" onclick="donate()">Donate Tokens</button>
+  </div>
 
   <div id="message"></div>
 
   <script>
+    let pollInterval = null;
+    let currentQuoteId = null;
+
+    async function createInvoice() {
+      const amountInput = document.getElementById('amountInput');
+      const createBtn = document.getElementById('createInvoiceBtn');
+      const invoiceDisplay = document.getElementById('invoiceDisplay');
+
+      const amount = parseInt(amountInput.value);
+
+      if (!amount || amount < 1) {
+        showMessage('Please enter a valid amount (minimum 1 sat)', 'error');
+        return;
+      }
+
+      createBtn.disabled = true;
+      showMessage('Creating invoice...', 'info');
+
+      try {
+        const response = await fetch('/api/donate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          currentQuoteId = data.quoteId;
+          document.getElementById('invoiceQR').src = data.qrCode;
+          document.getElementById('invoiceString').textContent = data.paymentRequest;
+          invoiceDisplay.style.display = 'block';
+          hideMessage();
+
+          // Start polling for payment
+          startPolling(data.quoteId);
+        } else {
+          showMessage(`✗ Error: ${data.error}`, 'error');
+          createBtn.disabled = false;
+        }
+      } catch (err) {
+        showMessage(`✗ Network error: ${err.message}`, 'error');
+        createBtn.disabled = false;
+      }
+    }
+
+    function startPolling(quoteId) {
+      // Poll every 2 seconds
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/donate/check/${quoteId}`);
+          const data = await response.json();
+
+          if (data.paid) {
+            clearInterval(pollInterval);
+            document.getElementById('paymentStatus').innerHTML = `
+              <p style="color: #155724; font-weight: bold;">✅ Payment received!</p>
+              <p>New puzzle pot: ${data.balance} sats</p>
+            `;
+
+            // Show success message with link
+            setTimeout(() => {
+              showMessage('', 'success');
+              document.getElementById('message').innerHTML = `
+                ✓ Successfully donated! New puzzle pot: ${data.balance} sats<br><br>
+                <a href="/puzzle.html" style="color: #155724; font-weight: bold; text-decoration: underline;">
+                  🧩 Start solving puzzles now!
+                </a>
+              `;
+            }, 1000);
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
+        }
+      }, 2000);
+    }
+
+    async function copyInvoice() {
+      const invoiceString = document.getElementById('invoiceString').textContent;
+      try {
+        await navigator.clipboard.writeText(invoiceString);
+        showMessage('✓ Invoice copied to clipboard!', 'success');
+      } catch (err) {
+        showMessage('✗ Failed to copy. Please copy manually.', 'error');
+      }
+    }
+
     async function donate() {
       const tokenInput = document.getElementById('tokenInput');
       const donateBtn = document.getElementById('donateBtn');
-      const messageDiv = document.getElementById('message');
 
       const token = tokenInput.value.trim();
 
@@ -102,8 +270,7 @@
 
           // Show link to start puzzling
           setTimeout(() => {
-            const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = `
+            document.getElementById('message').innerHTML = `
               ✓ Successfully donated! New puzzle pot: ${data.balance} sats<br><br>
               <a href="/puzzle.html" style="color: #155724; font-weight: bold; text-decoration: underline;">
                 🧩 Start solving puzzles now!
@@ -124,6 +291,12 @@
       const messageDiv = document.getElementById('message');
       messageDiv.textContent = msg;
       messageDiv.className = 'message ' + type;
+      if (!msg) messageDiv.style.display = 'none';
+      else messageDiv.style.display = 'block';
+    }
+
+    function hideMessage() {
+      document.getElementById('message').style.display = 'none';
     }
 
     // Allow Enter key in textarea to submit
@@ -131,6 +304,11 @@
       if (e.ctrlKey && e.key === 'Enter') {
         donate();
       }
+    });
+
+    // Clean up polling on page unload
+    window.addEventListener('beforeunload', () => {
+      if (pollInterval) clearInterval(pollInterval);
     });
   </script>
 </body>

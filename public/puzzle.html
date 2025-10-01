@@ -157,11 +157,6 @@
     }
     .highlight-square {
       box-shadow: inset 0 0 0 4px yellow !important;
-      animation: fadeHighlight 1.5s ease-out;
-    }
-    @keyframes fadeHighlight {
-      0% { box-shadow: inset 0 0 0 4px yellow !important; }
-      100% { box-shadow: inset 0 0 0 4px rgba(255, 255, 0, 0) !important; }
     }
   </style>
 </head>
@@ -190,7 +185,7 @@
           <code style="font-size: 11px; word-break: break-all;" id="fen">-</code>
         </div>
         <div class="info-item">
-          <strong>Solution (cheat):</strong><br>
+          <strong>Next move (cheat):</strong><br>
           <code style="font-size: 12px; color: #d32f2f;" id="solution">-</code>
         </div>
         <div class="info-item">
@@ -255,12 +250,23 @@
       // Add highlight to from and to squares
       $('.square-' + from).addClass('highlight-square');
       $('.square-' + to).addClass('highlight-square');
+    }
 
-      // Remove highlights after animation completes
-      setTimeout(() => {
-        $('.square-' + from).removeClass('highlight-square');
-        $('.square-' + to).removeClass('highlight-square');
-      }, 1500);
+    // Clear all highlights
+    function clearHighlights() {
+      $('.square-55d63').removeClass('highlight-square');
+    }
+
+    // Update solution display to show only the user's next move
+    function updateSolutionDisplay() {
+      if (!currentPuzzle || solutionIndex >= currentPuzzle.solution.length) {
+        document.getElementById('solution').textContent = '-';
+        return;
+      }
+
+      // Show the current expected move (user's move at odd indices)
+      const nextMove = currentPuzzle.solution[solutionIndex];
+      document.getElementById('solution').textContent = nextMove;
     }
 
     // Load balance on page load
@@ -314,10 +320,12 @@
         document.getElementById('rating').textContent = puzzle.rating;
         document.getElementById('themes').textContent = puzzle.themes.join(', ') || 'None';
         document.getElementById('fen').textContent = fen;
-        document.getElementById('solution').textContent = puzzle.solution.join(' → ');
         document.getElementById('sideToMove').textContent = isWhiteToMove ? 'white' : 'black';
         document.getElementById('lichessLink').href = `https://lichess.org/training/${puzzle.id}`;
         document.getElementById('userMoves').textContent = 'None yet';
+
+        // Update solution display to show user's next move
+        updateSolutionDisplay();
 
         hideMessage();
       } catch (err) {
@@ -327,6 +335,9 @@
 
     // Handle piece drop on board
     function onDrop(source, target) {
+      // Clear highlights from opponent's previous move
+      clearHighlights();
+
       // Check if puzzle is complete
       if (solutionIndex >= currentPuzzle.solution.length) {
         return 'snapback';
@@ -380,6 +391,9 @@
 
         // Highlight the opponent's move
         highlightMove(from, to);
+
+        // Update solution display for next user move
+        updateSolutionDisplay();
 
         // Check if puzzle is complete after opponent's move
         if (solutionIndex >= currentPuzzle.solution.length) {
@@ -458,6 +472,7 @@
       userMoves = [];
       solutionIndex = 1; // User's turn starts at index 1
       updateMovesDisplay();
+      updateSolutionDisplay();
       hideMessage();
     }
 

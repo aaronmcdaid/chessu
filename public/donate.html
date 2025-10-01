@@ -97,8 +97,19 @@
         const data = await response.json();
 
         if (response.ok) {
-          showMessage(`✓ Successfully received ${data.amount} sats! New balance: ${data.balance} sats`, 'success');
+          showMessage(`✓ Successfully donated! New puzzle pot: ${data.balance} sats`, 'success');
           tokenInput.value = '';
+
+          // Show link to start puzzling
+          setTimeout(() => {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `
+              ✓ Successfully donated! New puzzle pot: ${data.balance} sats<br><br>
+              <a href="/puzzle.html" style="color: #155724; font-weight: bold; text-decoration: underline;">
+                🧩 Start solving puzzles now!
+              </a>
+            `;
+          }, 500);
         } else {
           showMessage(`✗ Error: ${data.error}`, 'error');
         }

@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 3000;
 // Configuration
 const config = {
   testMint: 'https://nofees.testnut.cashu.space',
-  mainMint: 'https://mint.minibits.cash',
+  mainMint: 'https://mint.minibits.cash/Bitcoin',
   activeMode: process.env.ACTIVE_MODE || 'test',
   dbPath: '/app/data/wallet.db',
   puzzleReward: 10, // sats per puzzle solved

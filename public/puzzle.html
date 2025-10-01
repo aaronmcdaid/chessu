@@ -199,25 +199,21 @@
       <div id="board"></div>
       <div class="puzzle-info">
         <h2>Puzzle Info</h2>
-        <div class="info-item">
-          <strong>Rating:</strong> <span id="rating">-</span>
-        </div>
-        <div class="info-item">
-          <strong>Themes:</strong> <span id="themes">-</span>
-        </div>
-        <div class="info-item">
-          <strong>FEN:</strong><br>
-          <code style="font-size: 11px; word-break: break-all;" id="fen">-</code>
-        </div>
-        <div class="info-item">
-          <strong>Instructions:</strong><br>
+        <div class="info-item" style="background: #e3f2fd; border-left: 4px solid #1976d2;">
+          <strong style="font-size: 16px;">Instructions:</strong><br>
           Find the <span class="cheat-wrapper">
             <span class="cheat-trigger" id="bestWord">best</span>
             <div class="cheat-tooltip" id="cheatTooltip">
               Next move: <strong id="solution">-</strong>
             </div>
-          </span> move for <strong id="sideToMove">white</strong>!<br>
-          <a id="lichessLink" href="#" target="_blank" style="color: #1976d2; font-size: 13px;">View on Lichess →</a>
+          </span> move for <strong id="sideToMove">white</strong>!
+        </div>
+        <div class="info-item">
+          <strong>Rating:</strong> <span id="rating">-</span>
+          <a id="lichessLink" href="#" target="_blank" style="color: #1976d2; font-size: 13px; margin-left: 15px;">View on Lichess →</a>
+        </div>
+        <div class="info-item">
+          <strong>Themes:</strong> <span id="themes">-</span>
         </div>
         <div class="moves-display">
           <strong>Your moves:</strong><br>
@@ -345,7 +341,6 @@
         setTimeout(() => highlightMove(from, to), 100);
         document.getElementById('rating').textContent = puzzle.rating;
         document.getElementById('themes').textContent = puzzle.themes.join(', ') || 'None';
-        document.getElementById('fen').textContent = fen;
         document.getElementById('sideToMove').textContent = isWhiteToMove ? 'white' : 'black';
         document.getElementById('lichessLink').href = `https://lichess.org/training/${puzzle.id}`;
         document.getElementById('userMoves').textContent = 'None yet';

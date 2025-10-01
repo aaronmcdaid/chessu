@@ -11,4 +11,7 @@ services:
       - NODE_ENV=production
       - ACTIVE_MODE=${ACTIVE_MODE:-test}
       - WALLET_SEED=${WALLET_SEED:-test-seed-for-development-only-change-in-production}
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     restart: unless-stopped

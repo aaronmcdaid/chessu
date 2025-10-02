@@ -378,19 +378,20 @@
         const to = firstMove.substring(2, 4);
         const promotion = firstMove.length === 5 ? firstMove[4] : 'q';
 
+        // Update UI - flip board if needed (before making move)
+        const isWhiteToMove = puzzle.fen.split(' ')[1] === 'w'; // Check from initial FEN
+        board.orientation(isWhiteToMove ? 'black' : 'white'); // Opponent plays first, so flip
+        board.position(puzzle.fen); // Set initial position
+
+        // Make and animate the opponent's first move
         game.move({
           from: from,
           to: to,
           promotion: promotion
         });
+
+        board.move(`${from}-${to}`);
         solutionIndex = 1; // User's turn starts at index 1
-
-        const fen = game.fen();
-        const isWhiteToMove = game.turn() === 'w';
-
-        // Update UI - flip board if Black to move
-        board.orientation(isWhiteToMove ? 'white' : 'black');
-        board.position(fen);
 
         // Highlight the opponent's move
         setTimeout(() => highlightMove(from, to), 100);
@@ -480,7 +481,8 @@
           promotion: promotion
         });
 
-        board.position(game.fen());
+        // Animate opponent's move
+        board.move(`${from}-${to}`);
         solutionIndex++;
 
         // Highlight the opponent's move
@@ -542,10 +544,13 @@
       $('.square-55d63').removeClass('selected-square');
       selectedSquare = null; // Clear selection
 
-      // Use the same logic as onDrop
+      // Animate the move first
+      board.move(`${source}-${target}`);
+
+      // Then validate
       const result = onDrop(source, target);
 
-      // If move failed, update board position
+      // If move failed, reset board position (will snap back)
       if (result === 'snapback') {
         console.log('Move failed - snapback');
         board.position(game.fen());
@@ -608,6 +613,11 @@
       // Reset to puzzle starting position
       game = new Chess(currentPuzzle.fen);
 
+      // Set initial position
+      const isWhiteToMove = currentPuzzle.fen.split(' ')[1] === 'w';
+      board.orientation(isWhiteToMove ? 'black' : 'white');
+      board.position(currentPuzzle.fen);
+
       // Play the first move (opponent's move) automatically
       const firstMove = currentPuzzle.solution[0];
       const from = firstMove.substring(0, 2);
@@ -620,9 +630,8 @@
         promotion: promotion
       });
 
-      const isWhiteToMove = game.turn() === 'w';
-      board.orientation(isWhiteToMove ? 'white' : 'black');
-      board.position(game.fen());
+      // Animate the opponent's first move
+      board.move(`${from}-${to}`);
 
       // Highlight the opponent's move
       setTimeout(() => highlightMove(from, to), 100);

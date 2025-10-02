@@ -277,6 +277,9 @@ app.post('/api/puzzle/solve', async (req, res) => {
     const token = await manager.wallet.send(activeMint, config.puzzleReward);
     const tokenString = getEncodedToken(token);
 
+    // Log puzzle solve event
+    console.log(`[PUZZLE SOLVED] Puzzle: ${puzzleId} | Amount: ${config.puzzleReward} sats`);
+
     // Generate QR code
     const qrCode = await QRCode.toDataURL(tokenString);
 

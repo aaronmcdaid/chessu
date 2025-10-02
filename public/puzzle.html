@@ -104,9 +104,9 @@
       border: 1px solid #f5c6cb;
     }
     .info {
-      background: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
+      background: #e9ecef;
+      color: #495057;
+      border: 1px solid #dee2e6;
     }
     .modal-overlay {
       display: none;
@@ -460,6 +460,9 @@
       userMoves.push(fullMove);
       solutionIndex++;
       updateMovesDisplay();
+
+      // Show feedback for correct move
+      showMessage('Good move - what\'s next?', 'info');
 
       // Check if puzzle is complete
       if (solutionIndex >= currentPuzzle.solution.length) {

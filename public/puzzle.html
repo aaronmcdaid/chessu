@@ -441,12 +441,9 @@
 
       // Check if move matches expected move
       if (userMove !== expectedMoveBase) {
-        console.log('Wrong move! Expected:', expectedMoveBase, 'Got:', userMove);
         showMessage('❌ Wrong move! Try again.', 'error');
         return 'snapback';
       }
-
-      console.log('Correct move:', userMove);
 
       // Make the move with correct promotion piece
       const move = game.move({
@@ -456,7 +453,6 @@
       });
 
       if (move === null) {
-        console.log('Move rejected by chess.js');
         return 'snapback';
       }
 
@@ -509,10 +505,7 @@
 
     // Handle square click for tap-to-select, tap-to-move
     function onSquareClick(square) {
-      console.log('Clicked square:', square, '| Currently selected:', selectedSquare);
-
       const piece = game.get(square);
-      console.log('Piece at', square, ':', piece);
 
       // If no square selected
       if (!selectedSquare) {
@@ -521,9 +514,6 @@
           $('.square-55d63').removeClass('selected-square');
           selectedSquare = square;
           $('.square-' + square).addClass('selected-square');
-          console.log('Selected piece at', square);
-        } else {
-          console.log('Cannot select - no piece or not your turn');
         }
         return;
       }
@@ -532,14 +522,12 @@
       if (piece && piece.color === game.turn()) {
         if (selectedSquare === square) {
           // Tapping same selected piece - do nothing (stay selected)
-          console.log('Tapped already-selected piece - keeping selection');
           return;
         } else {
           // Tapping different own piece - switch selection
           $('.square-55d63').removeClass('selected-square');
           selectedSquare = square;
           $('.square-' + square).addClass('selected-square');
-          console.log('Switched selection to', square);
           return;
         }
       }
@@ -547,7 +535,6 @@
       // Attempting to move to empty square or capture opponent's piece
       const source = selectedSquare;
       const target = square;
-      console.log('Attempting move from', source, 'to', target);
 
       $('.square-55d63').removeClass('selected-square');
       selectedSquare = null; // Clear selection
@@ -560,7 +547,6 @@
 
       // If move failed, reset board position (will snap back)
       if (result === 'snapback') {
-        console.log('Move failed - snapback');
         board.position(game.fen());
       }
     }

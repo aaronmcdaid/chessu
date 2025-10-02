@@ -283,6 +283,7 @@
           <button onclick="copyToken()" style="background: #2196F3; margin-top: 10px;">
             📋 Copy Token to Clipboard
           </button>
+          <div id="copyFeedback" style="margin-top: 10px; font-size: 14px; display: none;"></div>
         </div>
         <div style="margin: 10px 0; font-size: 14px; color: #666;">
           <strong>Mint:</strong> <span id="mintUrl"></span>
@@ -592,6 +593,7 @@
         if (response.ok) {
           // Success! Show reward modal
           hideMessage();
+          document.getElementById('copyFeedback').style.display = 'none'; // Hide old copy feedback
           document.getElementById('rewardModal').style.display = 'flex';
           document.getElementById('rewardAmount').textContent = data.reward;
           document.getElementById('qrImage').src = data.qrCode;
@@ -655,11 +657,16 @@
 
     async function copyToken() {
       const tokenString = document.getElementById('tokenString').textContent;
+      const feedbackDiv = document.getElementById('copyFeedback');
       try {
         await navigator.clipboard.writeText(tokenString);
-        showMessage('✓ Token copied to clipboard!', 'success');
+        feedbackDiv.textContent = '✓ Token copied to clipboard!';
+        feedbackDiv.style.color = '#155724';
+        feedbackDiv.style.display = 'block';
       } catch (err) {
-        showMessage('✗ Failed to copy. Please copy manually.', 'error');
+        feedbackDiv.textContent = '✗ Failed to copy. Please copy manually.';
+        feedbackDiv.style.color = '#721c24';
+        feedbackDiv.style.display = 'block';
       }
     }
 

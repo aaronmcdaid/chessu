@@ -402,7 +402,8 @@
         setTimeout(() => highlightMove(from, to), 100);
         document.getElementById('rating').textContent = puzzle.rating;
         document.getElementById('themes').textContent = puzzle.themes.join(', ') || 'None';
-        document.getElementById('sideToMove').textContent = isWhiteToMove ? 'white' : 'black';
+        // User plays opposite color: opponent moves first, so if white moves first, user is black
+        document.getElementById('sideToMove').textContent = isWhiteToMove ? 'black' : 'white';
         document.getElementById('lichessLink').href = `https://lichess.org/training/${puzzle.id}`;
         document.getElementById('userMoves').textContent = 'None yet';
 
@@ -440,7 +441,9 @@
       }
 
       // Check if move matches expected move
+      console.log('Move validation:', { userMove, expectedMoveBase, matches: userMove === expectedMoveBase });
       if (userMove !== expectedMoveBase) {
+        console.log('Wrong move!');
         showMessage('❌ Wrong move! Try again.', 'error');
         return 'snapback';
       }
@@ -453,11 +456,13 @@
       });
 
       if (move === null) {
+        console.log('Chess.js rejected the move');
         return 'snapback';
       }
 
       // Track user's move (include promotion piece if applicable)
       const fullMove = expectedMove.length === 5 ? userMove + promotionPiece : userMove;
+      console.log('Correct move! Adding to userMoves:', fullMove);
       userMoves.push(fullMove);
       solutionIndex++;
       updateMovesDisplay();
@@ -505,15 +510,20 @@
 
     // Handle square click for tap-to-select, tap-to-move
     function onSquareClick(square) {
+      console.log('onSquareClick called:', square);
       const piece = game.get(square);
+      console.log('Piece at square:', piece, 'Current turn:', game.turn(), 'Currently selected:', selectedSquare);
 
       // If no square selected
       if (!selectedSquare) {
         // Only select if there's a piece and it's the player's turn
         if (piece && piece.color === game.turn()) {
+          console.log('Selecting square:', square);
           $('.square-55d63').removeClass('selected-square');
           selectedSquare = square;
           $('.square-' + square).addClass('selected-square');
+        } else {
+          console.log('Cannot select - no piece or wrong color');
         }
         return;
       }
@@ -522,9 +532,11 @@
       if (piece && piece.color === game.turn()) {
         if (selectedSquare === square) {
           // Tapping same selected piece - do nothing (stay selected)
+          console.log('Tapping same piece - keeping selection');
           return;
         } else {
           // Tapping different own piece - switch selection
+          console.log('Switching selection to:', square);
           $('.square-55d63').removeClass('selected-square');
           selectedSquare = square;
           $('.square-' + square).addClass('selected-square');
@@ -535,6 +547,7 @@
       // Attempting to move to empty square or capture opponent's piece
       const source = selectedSquare;
       const target = square;
+      console.log('Attempting move:', source, '->', target);
 
       $('.square-55d63').removeClass('selected-square');
       selectedSquare = null; // Clear selection
@@ -544,6 +557,7 @@
 
       // Then validate
       const result = onDrop(source, target);
+      console.log('Move result:', result);
 
       // If move failed, reset board position (will snap back)
       if (result === 'snapback') {

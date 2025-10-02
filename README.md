@@ -214,11 +214,11 @@ MIT
 
 while testing on my laptop:
  - `docker-compose build && docker-compose down && docker-compose up -d` to restart docker after changing some code
- - `docker save -o chessu.tar cashu-chess-puzzle-chessu`
- - `scp chessu.tar root@chessu.cash:`
+ - `docker save -o docker-save--chessu.tar cashu-chess-puzzle-chessu`
+ - `scp docker-save--chessu.tar root@chessu.cash:`
 
 ```
   On the VPS:
   cd ~/cashu-chess-puzzle
-  docker-compose down && docker load -i ~/chessu.tar && docker-compose up -d
+  docker-compose down && docker load -i ~/docker-save--chessu.tar && docker-compose up -d
 ```

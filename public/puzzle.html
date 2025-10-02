@@ -409,13 +409,8 @@
       }
     }
 
-    // Handle piece drop on board
+    // Handle piece move (called by onSquareClick)
     function onDrop(source, target) {
-      // Ignore clicks (source === target), let onSquareClick handle them
-      if (source === target) {
-        return;
-      }
-
       // Clear highlights from opponent's previous move
       clearHighlights();
 
@@ -440,9 +435,12 @@
 
       // Check if move matches expected move
       if (userMove !== expectedMoveBase) {
+        console.log('Wrong move! Expected:', expectedMoveBase, 'Got:', userMove);
         showMessage('❌ Wrong move! Try again.', 'error');
         return 'snapback';
       }
+
+      console.log('Correct move:', userMove);
 
       // Make the move with correct promotion piece
       const move = game.move({
@@ -451,7 +449,10 @@
         promotion: promotionPiece
       });
 
-      if (move === null) return 'snapback';
+      if (move === null) {
+        console.log('Move rejected by chess.js');
+        return 'snapback';
+      }
 
       // Track user's move (include promotion piece if applicable)
       const fullMove = expectedMove.length === 5 ? userMove + promotionPiece : userMove;
@@ -498,36 +499,55 @@
 
     // Handle square click for tap-to-select, tap-to-move
     function onSquareClick(square) {
-      // Clear selection highlight
-      $('.square-55d63').removeClass('selected-square');
+      console.log('Clicked square:', square, '| Currently selected:', selectedSquare);
 
-      // If no square selected, select this square
+      const piece = game.get(square);
+      console.log('Piece at', square, ':', piece);
+
+      // If no square selected
       if (!selectedSquare) {
-        const piece = game.get(square);
         // Only select if there's a piece and it's the player's turn
         if (piece && piece.color === game.turn()) {
+          $('.square-55d63').removeClass('selected-square');
           selectedSquare = square;
           $('.square-' + square).addClass('selected-square');
+          console.log('Selected piece at', square);
+        } else {
+          console.log('Cannot select - no piece or not your turn');
         }
         return;
       }
 
-      // If clicking the same square, deselect
-      if (selectedSquare === square) {
-        selectedSquare = null;
-        return;
+      // If tapping your own piece (whether same or different)
+      if (piece && piece.color === game.turn()) {
+        if (selectedSquare === square) {
+          // Tapping same selected piece - do nothing (stay selected)
+          console.log('Tapped already-selected piece - keeping selection');
+          return;
+        } else {
+          // Tapping different own piece - switch selection
+          $('.square-55d63').removeClass('selected-square');
+          selectedSquare = square;
+          $('.square-' + square).addClass('selected-square');
+          console.log('Switched selection to', square);
+          return;
+        }
       }
 
-      // Try to move from selected square to clicked square
+      // Attempting to move to empty square or capture opponent's piece
       const source = selectedSquare;
       const target = square;
+      console.log('Attempting move from', source, 'to', target);
+
+      $('.square-55d63').removeClass('selected-square');
       selectedSquare = null; // Clear selection
 
       // Use the same logic as onDrop
       const result = onDrop(source, target);
 
-      // If move failed, update board position to snap back
+      // If move failed, update board position
       if (result === 'snapback') {
+        console.log('Move failed - snapback');
         board.position(game.fen());
       }
     }
@@ -637,62 +657,21 @@
       document.getElementById('message').style.display = 'none';
     }
 
-    // Initialize board (empty initially, will be set when puzzle loads)
+    // Initialize board (no dragging - tap only)
     const config = {
-      draggable: true,
-      onDrop: onDrop,
+      draggable: false,
       pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
     };
     board = Chessboard('board', config);
 
-    // Add click handlers to squares and pieces (chessboard.js doesn't have onSquareClick)
+    // Handle all clicks on the board - tap to select, tap to move
     $('#board').on('click', '.square-55d63', function(e) {
-      // Get square from the clicked element or its parent
       let square = $(this).attr('data-square');
       if (!square) {
         square = $(this).closest('.square-55d63').attr('data-square');
       }
       if (square) {
         onSquareClick(square);
-      }
-    });
-
-    // Handle tap-to-select: detect quick tap vs drag
-    let tapStartTime = null;
-    let tapStartSquare = null;
-    let dragDetected = false;
-
-    $('#board').on('mousedown touchstart', 'img[class^="piece-"]', function(e) {
-      const $piece = $(this);
-      const square = $piece.parent('.square-55d63').attr('data-square');
-
-      if (square) {
-        tapStartTime = Date.now();
-        tapStartSquare = square;
-        dragDetected = false;
-      }
-    });
-
-    $('#board').on('mouseup touchend', 'img[class^="piece-"]', function(e) {
-      if (tapStartSquare && !dragDetected) {
-        const tapDuration = Date.now() - tapStartTime;
-        const square = $(this).parent('.square-55d63').attr('data-square');
-
-        // Quick tap on same square = select
-        if (tapDuration < 300 && square === tapStartSquare) {
-          e.stopPropagation();
-          onSquareClick(square);
-        }
-      }
-      tapStartTime = null;
-      tapStartSquare = null;
-      dragDetected = false;
-    });
-
-    // Detect if drag started
-    $('#board').on('mousemove touchmove', 'img[class^="piece-"]', function(e) {
-      if (tapStartSquare) {
-        dragDetected = true;
       }
     });
 
